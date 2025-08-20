@@ -2,18 +2,29 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies (if needed)
-RUN apt-get update && apt-get install -y build-essential
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy project files
-COPY . /app
+# Copy requirements first for better caching
+COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-# Expose port if you run FastAPI (change if needed)
+# Copy project files
+COPY . .
+
+# Create non-root user
+RUN useradd --create-home --shell /bin/bash app \
+    && chown -R app:app /app
+USER app
+
+# Expose FastAPI port
 EXPOSE 8000
 
-# Default command (change main.py if needed)
-CMD ["python", "main.py"]
+# Use uvicorn to run FastAPI in production mode
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

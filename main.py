@@ -1,57 +1,48 @@
-from prompt import MAIN_PROMPT, THINK_PROMPT
-from ollama import chat
-import threading
-import time
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+import uvicorn
+from typing import Optional
 
+app = FastAPI(title="Chat Streaming API", version="1.0.0")
 
-def stream_thinking_prompt(model, stop_event):
-    stream = chat(model=model, messages=[
-        {
-            'role': 'user',
-            'content': THINK_PROMPT,
-        },
-    ], stream=True)
-    print("🤔 Thinking...")
+class ChatRequest(BaseModel):
+    message: str
+    system_prompt: Optional[str] = None
 
-    for chunk in stream:
-        if stop_event.is_set():
-            break
-        print(chunk['message']['content'], end='', flush=True)
-        time.sleep(0.05)
+class ChatResponse(BaseModel):
+    response: str
+    status: str
 
-    print("\n🤔 Thinking complete")
+@app.get("/")
+async def root():
+    return {"message": "Chat Streaming API is running"}
 
+@app.post("/chat-news-stream", response_model=ChatResponse)
+async def chat_endpoint(request: ChatRequest):
+    """
+    Streams 'thinking' and 'main' responses for a news query.
+    - Gets news from Apache Solr.
+        # right now using static prompt
+    - Uses a smaller model to generate 'thinking' output.
+    - Uses a larger model for the main result.
+    - Streams 'thinking' until the first chunk of the main result arrives, then streams the main result.
+    """
+    try:
+        # For now, return a static response
+        # TODO: Implement actual chat logic with streaming
+        static_response = f"You said: {request.message}. This is a static response for testing."
+        
+        return ChatResponse(
+            response=static_response,
+            status="success"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-def stream_main_prompt(model, stop_event):
-    stream = chat(model=model, messages=[
-        {
-            'role': 'user',
-            'content': MAIN_PROMPT,
-        },
-    ], stream=True)
-    for i, chunk in enumerate(stream):
-        # stop thinking thread at first chunk
-        if i == 0:
-            print("main thread start")
-            stop_event.set()
-        print(chunk['message']['content'], end='', flush=True)
-    print()
-
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
 
 if __name__ == "__main__":
-    MAIN_MODEL = "qwen2.5:7b"
-    THINKING_MODEL = "qwen2.5:3b"
-
-    stop_event = threading.Event()
-
-    main_thread = threading.Thread(
-        target=stream_main_prompt, args=(MAIN_MODEL, stop_event))
-    thinking_thread = threading.Thread(
-        target=stream_thinking_prompt, args=(THINKING_MODEL, stop_event))
-
-    thinking_thread.start()
-    time.sleep(1)
-    main_thread.start()
-
-    thinking_thread.join()
-    main_thread.join()
+    uvicorn.run(app, host="0.0.0.0", port=8000)
