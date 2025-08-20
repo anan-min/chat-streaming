@@ -1,0 +1,32 @@
+NVIDIA GeForce RTX3050 6GB Laptop GPU
+13th Gen Intel(R) Core(TM) i5-13450Hx
+
+Testing model: qwen2.5:0.5b
+first chunk time: 2.1750 seconds
+average interval between chunks: 0.0098 seconds
+total chunks: 1078
+total time: 6.5594 seconds
+
+Testing model: qwen2.5:1.5b
+first chunk time: 2.5386 seconds
+average interval between chunks: 0.0143 seconds
+total chunks: 631
+total time: 5.9574 seconds
+
+Testing model: qwen2.5:3b
+first chunk time: 5.7737 seconds
+average interval between chunks: 0.0228 seconds
+total chunks: 668
+total time: 22.3205 seconds
+
+Testing model: qwen2.5:7b
+first chunk time: 15.4434 seconds
+average interval between chunks: 0.0541 seconds
+total chunks: 557
+total time: 52.2041 seconds
+
+Testing model: qwen2.5:14b
+first chunk time: 22.4559 seconds
+average interval between chunks: 0.2210 seconds
+total chunks: 452
+total time: 120.0020 seconds
